@@ -1,0 +1,7 @@
+# Git server runtime data
+/git-server/repos/*
+!/git-server/repos/.gitkeep
+
+# Keys directory: keep folder, ignore real keys
+/git-server/keys/*
+!/git-server/keys/.gitkeep
