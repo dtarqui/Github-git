@@ -18,13 +18,15 @@ LABEL org.opencontainers.image.title="git-ssh-server" \
 	org.opencontainers.image.source="local-workspace"
 
 # Install Git + OpenSSH server + Apache for Git Smart HTTP.
-RUN apt-get update \
-	&& apt-get install -y --no-install-recommends \
+# Retries/timeouts help when Ubuntu mirrors or DNS are temporarily flaky.
+RUN apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout="30" update \
+	&& apt-get install -y --no-install-recommends --fix-missing \
 		git \
 		openssh-server \
 		apache2 \
 		apache2-utils \
 		ca-certificates \
+	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Create git user with git-shell to prevent interactive shell access.
