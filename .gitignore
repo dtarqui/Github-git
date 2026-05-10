@@ -1,7 +1,19 @@
-# Git server runtime data
+# Runtime data — keep folder stubs, ignore real content.
 /git-server/repos/*
 !/git-server/repos/.gitkeep
 
-# Keys directory: keep folder, ignore real keys
 /git-server/keys/*
 !/git-server/keys/.gitkeep
+
+/git-server/ssh-host-keys/*
+!/git-server/ssh-host-keys/.gitkeep
+
+# Environment files
+.env
+.env.*
+
+# Nginx TLS certs
+/nginx/certs/
+/Github-git.iml
+
+.idea

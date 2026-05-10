@@ -1,0 +1,30 @@
+services:
+  git-server:
+    build: .
+    image: git-ssh-http-server:latest
+    container_name: git-server
+    ports:
+      - "2222:22"     # SSH — clients connect here directly (host port 22 is taken by the OS)
+      - "9080:80"     # Port 80 (HTTP git) is NOT exposed. Only the microservice reaches it internally.
+    volumes:
+      - git-repos:/git-server/repos          # shared with microservice (JGit repo creation)
+      - git-keys:/git-server/keys            # shared with microservice (SSH key files)
+      - git-ssh-host-keys:/git-server/ssh-host-keys
+    environment:
+      MICROSERVICE_URL: "${MICROSERVICE_URL}"
+      MICROSERVICE_AUTH_TOKEN: "${MICROSERVICE_AUTH_TOKEN}"
+      AUTO_CREATE_BARE_REPO: "false"
+      DEFAULT_BARE_REPO: ""
+    networks:
+      - git-net
+    restart: unless-stopped
+
+volumes:
+  git-repos:
+  git-keys:
+  git-ssh-host-keys:
+
+networks:
+  git-net:
+    name: git-net    # microservice must join this network to reach http://git-server:80
+    driver: bridge

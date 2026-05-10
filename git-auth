@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# SSH access-control hook.
+#
+# In STANDALONE mode (MICROSERVICE_URL not set):
+#   Allows access to any existing repo. All SSH key holders are trusted.
+#
+# In MICROSERVICE mode (MICROSERVICE_URL set):
+#   Calls GET $MICROSERVICE_URL/internal/ssh-access with headers:
+#     X-Git-User:  <username>
+#     X-Git-Repo:  <owner/reponame.git>
+#     X-Git-Op:    read | write
+#     Authorization: Bearer <MICROSERVICE_AUTH_TOKEN>  (if set)
+#   HTTP 200 → allow. Anything else → deny.
+#
+# How it gets invoked — the microservice writes to git-server/keys/ as:
+#   command="/usr/local/bin/git-auth alice",no-pty,no-port-forwarding ssh-ed25519 AAAA...
+# The server's key watcher picks up the file within 5 seconds.
+
+set -euo pipefail
+
+USERNAME="${1:-}"
+CMD="${SSH_ORIGINAL_COMMAND:-}"
+REPOS_DIR="${REPOS_DIR:-/git-server/repos}"
+MICROSERVICE_URL="${MICROSERVICE_URL:-}"
+MICROSERVICE_AUTH_TOKEN="${MICROSERVICE_AUTH_TOKEN:-}"
+
+if [[ -z "${CMD}" ]]; then
+  echo "Interactive shell access is not permitted." >&2
+  exit 1
+fi
+
+if [[ -z "${USERNAME}" ]]; then
+  echo "git-auth: no username supplied." >&2
+  exit 1
+fi
+
+# Parse: "git-upload-pack '/owner/repo.git'"  or  "git-receive-pack 'repo.git'"
+OP=$(echo "${CMD}" | awk '{print $1}')
+REPO_ARG=$(echo "${CMD}" | sed -E "s|^[^ ]+ +'?([^']+)'?\$|\1|")
+REPO_PATH="${REPO_ARG#/}"    # strip leading slash
+
+case "${OP}" in
+  git-upload-pack|git-upload-archive) ACCESS="read"  ;;
+  git-receive-pack)                   ACCESS="write" ;;
+  *) echo "Unsupported git command: ${OP}" >&2; exit 1 ;;
+esac
+
+TARGET="${REPOS_DIR}/${REPO_PATH}"
+if [[ ! -d "${TARGET}" ]]; then
+  echo "Repository not found: ${REPO_PATH}" >&2
+  exit 1
+fi
+
+if [[ -n "${MICROSERVICE_URL}" ]]; then
+  curl_args=(
+    -sf -o /dev/null -w "%{http_code}"
+    --connect-timeout 5 --max-time 10
+    -H "X-Git-User: ${USERNAME}"
+    -H "X-Git-Repo: ${REPO_PATH}"
+    -H "X-Git-Op: ${ACCESS}"
+  )
+  [[ -n "${MICROSERVICE_AUTH_TOKEN}" ]] && \
+    curl_args+=(-H "Authorization: Bearer ${MICROSERVICE_AUTH_TOKEN}")
+  curl_args+=("${MICROSERVICE_URL}/internal/ssh-access")
+
+  HTTP_CODE=$(curl "${curl_args[@]}" 2>/dev/null || echo "000")
+
+  if [[ "${HTTP_CODE}" != "200" ]]; then
+    echo "Access denied." >&2
+    exit 1
+  fi
+fi
+
+exec "${OP}" "${TARGET}"

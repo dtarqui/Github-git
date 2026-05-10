@@ -1,0 +1,49 @@
+# Production: git-server + your Spring Boot microservice on the same host.
+# Both containers share the repos and keys volumes.
+# Replace your-git-service:latest with your actual microservice image.
+
+services:
+  git-server:
+    image: git-server:latest
+    container_name: git-server
+    ports:
+      - "22:22"
+    volumes:
+      - git-repos:/git-server/repos
+      - git-keys:/git-server/keys
+      - git-ssh-host-keys:/git-server/ssh-host-keys
+    environment:
+      MICROSERVICE_URL: "http://git-service:8080"
+      MICROSERVICE_AUTH_TOKEN: "${MICROSERVICE_AUTH_TOKEN}"
+    networks:
+      - git-net
+    restart: unless-stopped
+
+  git-service:
+    image: your-git-service:latest
+    container_name: git-service
+    ports:
+      - "80:8080"
+      - "443:8443"   # if your service handles TLS; otherwise put Nginx in front
+    volumes:
+      - git-repos:/git-server/repos   # same volume — microservice creates repos via JGit
+      - git-keys:/git-server/keys     # same volume — microservice writes SSH key files
+    environment:
+      MICROSERVICE_AUTH_TOKEN: "${MICROSERVICE_AUTH_TOKEN}"
+      GIT_SERVER_HTTP_URL: "http://git-server:80"
+      GIT_REPOS_PATH: "/git-server/repos"
+      GIT_KEYS_PATH: "/git-server/keys"
+    networks:
+      - git-net
+    depends_on:
+      - git-server
+    restart: unless-stopped
+
+volumes:
+  git-repos:
+  git-keys:
+  git-ssh-host-keys:
+
+networks:
+  git-net:
+    driver: bridge
