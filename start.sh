@@ -76,13 +76,20 @@ chmod 600 "${AUTHORIZED_KEYS}"
 chmod 2775 "${REPOS_DIR}"
 
 # ── Apache — no auth, internal use only ──────────────────────────────────────
+RECEIVEPACK_LINE=""
+if [[ "${GIT_HTTP_RECEIVEPACK_DEFAULT}" == "true" ]]; then
+  RECEIVEPACK_LINE="  SetEnv GIT_HTTP_RECEIVEPACK true"
+fi
+
 cat > /etc/apache2/sites-available/git-http.conf <<EOF
 <VirtualHost *:80>
   ServerName _
 
   SetEnv GIT_PROJECT_ROOT ${REPOS_DIR}
   SetEnv GIT_HTTP_EXPORT_ALL
+${RECEIVEPACK_LINE}
 
+  SetEnv GIT_HTTP_RECEIVEPACK_DEFAULT ${GIT_HTTP_RECEIVEPACK_DEFAULT}
   SetEnv REPOS_DIR ${REPOS_DIR}
   SetEnv KEYS_DIR ${KEYS_DIR}
   SetEnv MICROSERVICE_AUTH_TOKEN ${MICROSERVICE_AUTH_TOKEN}
