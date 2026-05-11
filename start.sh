@@ -7,6 +7,7 @@ AUTHORIZED_KEYS="${SSH_DIR}/authorized_keys"
 KEYS_DIR="${KEYS_DIR:-/git-server/keys}"
 SSH_KEYS_DIR="${SSH_KEYS_DIR:-/git-server/ssh-host-keys}"
 REPOS_DIR="${REPOS_DIR:-/git-server/repos}"
+GIT_HTTP_RECEIVEPACK_DEFAULT="${GIT_HTTP_RECEIVEPACK_DEFAULT:-true}"
 AUTO_CREATE_BARE_REPO="${AUTO_CREATE_BARE_REPO:-false}"
 DEFAULT_BARE_REPO="${DEFAULT_BARE_REPO:-}"
 MICROSERVICE_URL="${MICROSERVICE_URL:-}"
@@ -126,6 +127,13 @@ if [[ "${AUTO_CREATE_BARE_REPO}" == "true" && -n "${DEFAULT_BARE_REPO}" ]]; then
   fi
 fi
 
+# ── HTTP push default policy ────────────────────────────────────────────────
+if [[ "${GIT_HTTP_RECEIVEPACK_DEFAULT}" == "true" ]]; then
+  while IFS= read -r -d '' repo; do
+    git -C "${repo}" config http.receivepack true || true
+  done < <(find "${REPOS_DIR}" -type d -name "*.git" -print0)
+fi
+
 # ── Startup info ─────────────────────────────────────────────────────────────
 echo "---"
 if [[ -n "${MICROSERVICE_URL}" ]]; then
@@ -135,6 +143,7 @@ else
   echo "         All SSH key holders can access all repos."
 fi
 echo "HTTP git (internal): http://localhost:80/git/<owner>/<repo>.git"
+echo "HTTP push default:   ${GIT_HTTP_RECEIVEPACK_DEFAULT}"
 echo "SSH git:             ssh://git@<host>:22${REPOS_DIR}/<owner>/<repo>.git"
 echo "---"
 

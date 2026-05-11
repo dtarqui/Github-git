@@ -21,6 +21,7 @@ URI="${REQUEST_URI:-}"
 QUERY="${QUERY_STRING:-}"
 REPOS_DIR="${REPOS_DIR:-/git-server/repos}"
 KEYS_DIR="${KEYS_DIR:-/git-server/keys}"
+GIT_HTTP_RECEIVEPACK_DEFAULT="${GIT_HTTP_RECEIVEPACK_DEFAULT:-true}"
 
 # Strip /admin/ prefix: /admin/repos/alice/myrepo → repos/alice/myrepo
 INFO="${URI#/admin/}"
@@ -53,6 +54,9 @@ case "${TYPE}" in
       else
         if [[ ! -d "${REPO_PATH}" ]]; then
           git init --bare --shared=group "${REPO_PATH}" >/dev/null 2>&1
+          if [[ "${GIT_HTTP_RECEIVEPACK_DEFAULT}" == "true" ]]; then
+            git -C "${REPO_PATH}" config http.receivepack true
+          fi
         fi
       fi
       respond "201 Created" "{\"repo\":\"${OWNER}/${NAME}.git\"}"

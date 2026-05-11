@@ -7,6 +7,7 @@
 set -euo pipefail
 
 REPOS_DIR="${REPOS_DIR:-/git-server/repos}"
+GIT_HTTP_RECEIVEPACK_DEFAULT="${GIT_HTTP_RECEIVEPACK_DEFAULT:-true}"
 cmd="${1:-}"
 
 _sanitize() {
@@ -30,6 +31,9 @@ case "${cmd}" in
       "git init --bare --shared=group --initial-branch=main \"${target}\" 2>/dev/null || \
        { git init --bare --shared=group \"${target}\"; \
          git --git-dir=\"${target}\" symbolic-ref HEAD refs/heads/main; }"
+    if [[ "${GIT_HTTP_RECEIVEPACK_DEFAULT}" == "true" ]]; then
+      git -C "${target}" config http.receivepack true
+    fi
     echo "Created: ${name}"
     ;;
 

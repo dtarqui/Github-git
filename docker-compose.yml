@@ -13,6 +13,7 @@ services:
     environment:
       MICROSERVICE_URL: "${MICROSERVICE_URL}"
       MICROSERVICE_AUTH_TOKEN: "${MICROSERVICE_AUTH_TOKEN}"
+      GIT_HTTP_RECEIVEPACK_DEFAULT: "true"
       AUTO_CREATE_BARE_REPO: "false"
       DEFAULT_BARE_REPO: ""
     networks:

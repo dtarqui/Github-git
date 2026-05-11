@@ -4,6 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 	KEYS_DIR=/git-server/keys \
 	SSH_KEYS_DIR=/git-server/ssh-host-keys \
 	REPOS_DIR=/git-server/repos \
+	GIT_HTTP_RECEIVEPACK_DEFAULT=true \
 	AUTO_CREATE_BARE_REPO=false \
 	DEFAULT_BARE_REPO= \
 	MICROSERVICE_URL= \
