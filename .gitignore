@@ -11,6 +11,7 @@
 # Environment files
 .env
 .env.*
+!.env.example
 
 # Nginx TLS certs
 /nginx/certs/
