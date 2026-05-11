@@ -10,10 +10,14 @@ ENV DEBIAN_FRONTEND=noninteractive \
 	MICROSERVICE_URL= \
 	MICROSERVICE_AUTH_TOKEN=
 
-LABEL org.opencontainers.image.title="git-server" \
-	org.opencontainers.image.description="Git storage backend (SSH + HTTP) for a microservice layer" \
-	org.opencontainers.image.vendor="local-repo" \
-	org.opencontainers.image.source="local-workspace"
+LABEL org.opencontainers.image.title="Github-git" \
+	org.opencontainers.image.description="Git storage backend (SSH + HTTP) for repositories managed by a microservice layer" \
+	org.opencontainers.image.vendor="Githubx" \
+	org.opencontainers.image.url="https://github.com/dtarqui/Github-git" \
+	org.opencontainers.image.source="https://github.com/dtarqui/Github-git" \
+	org.opencontainers.image.documentation="https://github.com/dtarqui/Github-git/blob/main/README.md" \
+	org.opencontainers.image.licenses="MIT" \
+	org.opencontainers.image.authors="dtarqui"
 
 RUN apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout="30" update \
 	&& apt-get install -y --no-install-recommends --fix-missing \
