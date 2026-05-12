@@ -3,8 +3,6 @@ name: CI/CD
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 permissions:
   contents: read
@@ -25,6 +23,26 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Resolve Docker image repository
+        env:
+          DOCKERHUB_REPOSITORY: ${{ vars.DOCKERHUB_REPOSITORY }}
+        run: |
+          IMAGE_REPO="$DOCKERHUB_REPOSITORY"
+
+          if [ -z "$IMAGE_REPO" ] && [ -f .env ]; then
+            IMAGE_REPO=$(grep -E '^DOCKERHUB_REPOSITORY=' .env | tail -n 1 | cut -d '=' -f2- || true)
+          fi
+
+          if [ -z "$IMAGE_REPO" ] && [ -f .env.properties ]; then
+            IMAGE_REPO=$(grep -E '^DOCKERHUB_REPOSITORY=' .env.properties | tail -n 1 | cut -d '=' -f2- || true)
+          fi
+
+          if [ -z "$IMAGE_REPO" ]; then
+            IMAGE_REPO="git-ssh-http-server"
+          fi
+
+          echo "IMAGE_REPO=$IMAGE_REPO" >> "$GITHUB_ENV"
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v7.1.0
         with:
@@ -43,5 +61,5 @@ jobs:
             org.opencontainers.image.version=${{ github.ref_name }}
             org.opencontainers.image.revision=${{ github.sha }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/git-ssh-http-server:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/git-ssh-http-server:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_REPO }}:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_REPO }}:latest
