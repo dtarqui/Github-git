@@ -3,7 +3,13 @@ set -euo pipefail
 
 respond() {
   local status="$1" body="${2:-}"
-  printf "Status: %s\r\nContent-Type: application/json\r\n\r\n%s" "$status" "$body"
+  printf "Status: %s\r\n" "$status"
+  printf "Content-Type: application/json\r\n"
+  printf "Access-Control-Allow-Origin: http://localhost:3000\r\n"
+  printf "Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS\r\n"
+  printf "Access-Control-Allow-Headers: Content-Type, Authorization, X-Admin-Token\r\n"
+  printf "Access-Control-Allow-Credentials: true\r\n"
+  printf "\r\n%s" "$body"
 }
 
 TOKEN="${HTTP_X_ADMIN_TOKEN:-}"
@@ -17,6 +23,19 @@ if [[ -n "${EXPECTED}" ]] && [[ "${TOKEN}" != "${EXPECTED}" ]]; then
 fi
 
 METHOD="${REQUEST_METHOD:-GET}"
+
+# Handle CORS preflight
+if [[ "${METHOD}" == "OPTIONS" ]]; then
+  printf "Status: 204 No Content\r\n"
+  printf "Access-Control-Allow-Origin: http://localhost:3000\r\n"
+  printf "Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS\r\n"
+  printf "Access-Control-Allow-Headers: Content-Type, Authorization, X-Admin-Token\r\n"
+  printf "Access-Control-Allow-Credentials: true\r\n"
+  printf "Access-Control-Max-Age: 3600\r\n"
+  printf "\r\n"
+  exit 0
+fi
+
 URI="${REQUEST_URI:-}"
 QUERY="${QUERY_STRING:-}"
 REPOS_DIR="${REPOS_DIR:-/git-server/repos}"
