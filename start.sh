@@ -74,6 +74,8 @@ chown -R git:git "${GIT_HOME}" "${KEYS_DIR}" "${REPOS_DIR}"
 chmod 700 "${SSH_DIR}"
 chmod 600 "${AUTHORIZED_KEYS}"
 chmod 2775 "${REPOS_DIR}"
+# Ensure group write permissions on all repo subdirectories (for www-data/CGI)
+find "${REPOS_DIR}" -type d -exec chmod g+ws {} \;
 
 # ── Apache — no auth, internal use only ──────────────────────────────────────
 cat > /etc/apache2/sites-available/git-http.conf <<EOF

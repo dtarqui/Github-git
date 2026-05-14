@@ -72,7 +72,7 @@ case "${TYPE}" in
         chmod -R g+w "${REPO_PATH}" 2>/dev/null || true
       else
         if [[ ! -d "${REPO_PATH}" ]]; then
-          git init --bare --shared=group "${REPO_PATH}" >/dev/null 2>&1
+          git init --bare --shared=group --initial-branch=main "${REPO_PATH}" >/dev/null 2>&1
           if [[ "${GIT_HTTP_RECEIVEPACK_DEFAULT}" == "true" ]]; then
             git -C "${REPO_PATH}" config http.receivepack true
           fi
